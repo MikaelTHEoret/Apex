@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Dual L1/L2 Scroll Minting Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-sha3@0.8.0/src/keccak.js"></script>
+    <style>
+        body {
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 25%, #0f0f23 50%, #0a0a1a 100%);
+            color: #e6e6fa;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .particle {
+            position: absolute;
+            background: #00ffff;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 40px;
+            border: 2px solid #00ffff;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.3),
+                inset 0 0 30px rgba(255, 0, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            border-radius: 20px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes borderGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .title {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            animation: titlePulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+        
+        .glyph {
+            font-size: 1.8em;
+            color: #ffff00;
+            margin: 25px 0;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px #ffff00;
+            animation: glyphFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes glyphFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .dual-network-warning {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.2), rgba(255, 0, 255, 0.2));
+            border: 2px solid #ffa500;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 165, 0, 0.3);
+        }
+        
+        .dual-network-warning h3 {
+            color: #ffa500;
+            margin: 0 0 15px 0;
+            text-shadow: 0 0 15px #ffa500;
+        }
+        
+        .api-section {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        }
+
+        .api-section h3 {
+            color: #00ffff;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 15px #00ffff;
+        }
+        
+        .scroll-info {
+            background: linear-gradient(135deg, rgba(75, 0, 130, 0.3), rgba(138, 43, 226, 0.3));
+            border: 2px solid #9370db;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 0 25px rgba(147, 112, 219, 0.3);
+        }
+        
+        .network-section {
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 255, 255, 0.1));
+            border: 2px solid #00ff00;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        
+        .network-section h4 {
+            color: #00ff00;
+            margin: 0 0 15px 0;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #ffff00;
+            min-width: 180px;
+            text-shadow: 0 0 8px #ffff00;
+        }
+        
+        .value {
+            color: #e6e6fa;
+            word-break: break-all;
+            flex: 1;
+        }
+        
+        .input-section {
+            background: linear-gradient(135deg, rgba(50, 50, 100, 0.4), rgba(100, 50, 150, 0.4));
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 20px rgba(50, 50, 100, 0.3);
+        }
+        
+        .input-row {
+            margin: 20px 0;
+        }
+        
+        .input-row label {
+            display: block;
+            color: #ffff00;
+            margin-bottom: 8px;
+            font-weight: bold;
+            text-shadow: 0 0 8px #ffff00;
+        }
+        
+        .input-row input, .input-row select, .input-row textarea {
+            width: 100%;
+            padding: 15px;
+            background: rgba(26, 26, 62, 0.8);
+            border: 2px solid #9370db;
+            border-radius: 8px;
+            color: #e6e6fa;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .input-row input:focus, .input-row select:focus, .input-row textarea:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            background: rgba(26, 26, 62, 1);
+        }
+
+        .file-upload-area {
+            border: 2px dashed #00ffff;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(0, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #ffff00;
+        }
+
+        .file-upload-area.dragover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #ff00ff;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #4b0082, #8a2be2, #9932cc);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 12px 8px;
+            font-family: 'Orbitron', monospace;
+            width: 100%;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+        }
+        
+        .button:hover {
+            background: linear-gradient(45deg, #6a0dad, #9932cc, #ba55d3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(138, 43, 226, 0.6);
+        }
+        
+        .button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .button.success {
+            background: linear-gradient(45deg, #228b22, #32cd32, #90ee90);
+        }
+        
+        .button.warning {
+            background: linear-gradient(45deg, #ff8c00, #ffa500, #ffb347);
+        }
+
+        .button.pinata {
+            background: linear-gradient(45deg, #00ffff, #40e0d0, #00ced1);
+        }
+
+        .button.github {
+            background: linear-gradient(45deg, #ff00ff, #da70d6, #ee82ee);
+        }
+        
+        .status {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            border-left: 4px solid #ffff00;
+            white-space: pre-wrap;
+            max-height: 350px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .success {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .error {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        
+        .warning {
+            border-left-color: #ffa500;
+            background: rgba(255, 165, 0, 0.1);
+        }
+        
+        .hash {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-size: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .economics {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 179, 71, 0.2));
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+        }
+        
+        .highlight {
+            color: #ffff00;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ffff00;
+        }
+        
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .progress-step {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            background: rgba(100, 100, 100, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .progress-step.active {
+            background: rgba(255, 215, 0, 0.3);
+            color: #ffff00;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        
+        .progress-step.completed {
+            background: rgba(0, 255, 0, 0.3);
+            color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        .progress-step.failed {
+            background: rgba(255, 0, 0, 0.3);
+            color: #ff4444;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .json-preview {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #e6e6fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">⧉⟁⧉ Enhanced Dual L1/L2 Minting ⧉⟁⧉</div>
+            <div class="glyph">⧉⟁⧉⧗⚔⧗⟐⧙⟐⧬⚡⧬✶⧅✶⚡⧬⟁⧉</div>
+            <h3>Advanced Pinata & GitHub Integration</h3>
+        </div>
+
+        <div class="dual-network-warning">
+            <h3>🔥 ENHANCED DUAL L1/L2 ECONOMIC ACTIVATION</h3>
+            <p><strong>Auto-upload to IPFS via Pinata + Dual Network Minting!</strong></p>
+            <p>✅ GitHub file loading ✅ Auto-hash generation ✅ Pinata integration ✅ Complete workflow automation</p>
+        </div>
+
+        <div class="api-section">
+            <h3>🔐 API Configuration</h3>
+            <div class="two-column">
+                <div class="input-row">
+                    <label for="pinataApiKey">Pinata API Key:</label>
+                    <input type="password" id="pinataApiKey" placeholder="Your Pinata API Key">
+                </div>
+                <div class="input-row">
+                    <label for="pinataSecretKey">Pinata Secret Key:</label>
+                    <input type="password" id="pinataSecretKey" placeholder="Your Pinata Secret Key">
+                </div>
+            </div>
+            <div class="input-row">
+                <label for="githubToken">GitHub Token (optional, for private repos):</label>
+                <input type="password" id="githubToken" placeholder="GitHub Personal Access Token">
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h3>📁 Source Selection</h3>
+            
+            <div class="two-column">
+                <div>
+                    <h4 style="color: #00ffff;">📋 File Upload</h4>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <p>🎯 Drop JSON files here or click to browse</p>
+                        <p style="font-size: 0.9em; opacity: 0.8;">Supports: .json, .txt files</p>
+                        <input type="file" id="fileInput" style="display: none;" accept=".json,.txt" multiple>
+                    </div>
+                    <button class="button pinata" id="uploadToPinata" disabled>📤 Upload to Pinata & Auto-Fill</button>
+                </div>
+
+                <div>
+                    <h4 style="color: #ff00ff;">🔗 GitHub Integration</h4>
+                    <div class="input-row">
+                        <label for="githubRepo">GitHub Repository:</label>
+                        <input type="text" id="githubRepo" placeholder="owner/repo-name">
+                    </div>
+                    <div class="input-row">
+                        <label for="githubPath">File Path:</label>
+                        <input type="text" id="githubPath" placeholder="path/to/scroll.json">
+                    </div>
+                    <button class="button github" id="loadFromGithub">📥 Load from GitHub & Process</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-info">
+            <h3>🔗 Dual Contract Architecture</h3>
+            <div class="network-section">
+                <h4>🌐 L1 Contract (Ethereum Mainnet)</h4>
+                <div class="info-row">
+                    <span class="label">Address:</span>
+                    <span class="value hash">0x2C1f99011c584fDf4882Be484DfD938977D42C6D</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Function:</span>
+                    <span class="value">mint(address recipient, string cid, string title, bytes32 hash)</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Purpose:</span>
+                    <span class="value">Permanent anchor & perpetual royalty lock</span>
+                </div>
+            </div>
+            
+            <div class="network-section">
+                <h4>⚡ L2 Contract (Scroll Mainnet)</h4>
+                <div class="info-row">
+                    <span class="label">Address:</span>
+                    <span class="value hash">0x421B6FA3370c9B20A98A525301a508bE136C2034</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Function:</span>
+                    <span class="value">mint(address recipient, string cid, string title, bytes32 hash)</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Purpose:</span>
+                    <span class="value">Low-cost operations & KBT generation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h3>📝 Scroll Minting Parameters</h3>
+            
+            <div class="input-row">
+                <label for="recipientAddress">Recipient Address:</label>
+                <input type="text" id="recipientAddress" value="0x4575a90d54785323546f2bb4a520622ed6d3efbc" placeholder="0x...">
+            </div>
+            
+            <div class="two-column">
+                <div>
+                    <div class="input-row">
+                        <label for="scrollCid">IPFS CID:</label>
+                        <input type="text" id="scrollCid" placeholder="Auto-filled from Pinata upload" readonly>
+                    </div>
+                    
+                    <div class="input-row">
+                        <label for="scrollTitle">Scroll Title:</label>
+                        <input type="text" id="scrollTitle" placeholder="Auto-filled from JSON">
+                    </div>
+                    
+                    <div class="input-row">
+                        <label for="scrollHash">Keccak256 Hash:</label>
+                        <input type="text" id="scrollHash" placeholder="Auto-generated from content" readonly>
+                    </div>
+                </div>
+
+                <div>
+                    <label>JSON Preview:</label>
+                    <div class="json-preview" id="jsonPreview">
+                        Upload a file or load from GitHub to see preview...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="economics">
+            <h3>💰 Enhanced Economic Activation</h3>
+            <div class="info-row">
+                <span class="label">Auto-Upload:</span>
+                <span class="value">Pinata IPFS with permanent pinning</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Hash Generation:</span>
+                <span class="value">Automatic Keccak256 from content</span>
+            </div>
+            <div class="info-row">
+                <span class="label">L1 + L2 Deployment:</span>
+                <span class="value highlight">Complete sovereign economic activation</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Total Cost:</span>
+                <span class="value" id="totalCost">~$30-50 (L1 gas + L2 minimal + Pinata)</span>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            Ready for enhanced dual-source minting! Configure API keys and upload files to begin. 🚀
+        </div>
+
+        <div class="progress-bar" id="progressBar" style="display: none;">
+            <h4>🔄 Enhanced Minting Progress</h4>
+            <div class="progress-step" id="step1">1. File Processing & Hash Generation</div>
+            <div class="progress-step" id="step2">2. Pinata IPFS Upload</div>
+            <div class="progress-step" id="step3">3. Wallet Connection & Validation</div>
+            <div class="progress-step" id="step4">4. L1 Ethereum Minting</div>
+            <div class="progress-step" id="step5">5. L2 Scroll Minting</div>
+            <div class="progress-step" id="step6">6. Complete Economic Activation</div>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="button" id="connectWallet">🔗 Connect MetaMask</button>
+            <button class="button" id="validateParams" disabled>✅ Validate All Parameters</button>
+            <button class="button" id="mintDual" disabled>⚡ Execute Enhanced Dual Mint</button>
+        </div>
+
+        <div id="walletInfo" style="display: none;" class="scroll-info">
+            <h3>👛 Wallet Status</h3>
+            <div class="info-row">
+                <span class="label">Address:</span>
+                <span class="value" id="walletAddress"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Network:</span>
+                <span class="value" id="currentNetwork"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">ETH Balance:</span>
+                <span class="value" id="ethBalance"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Estimated Gas:</span>
+                <span class="value" id="gasEstimate">Calculating...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let provider, signer, userAddress;
+        let l1Provider, l2Provider;
+        let currentStep = 0;
+        let currentJsonContent = null;
+        
+        // Contract configurations
+        const L1_CONTRACT = "0x2C1f99011c584fDf4882Be484DfD938977D42C6D";
+        const L2_CONTRACT = "0x421B6FA3370c9B20A98A525301a508bE136C2034";
+        
+        const CONTRACT_ABI = [
+            "function mint(address recipient, string memory cid, string memory title, bytes32 hash) external payable",
+            "event ScrollMinted(address indexed recipient, string cid, string title, bytes32 hash, uint256 timestamp)"
+        ];
+        
+        // Network configurations
+        const ETHEREUM_MAINNET = {
+            chainId: '0x1',
+            chainName: 'Ethereum Mainnet',
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://ethereum.publicnode.com'],
+            blockExplorerUrls: ['https://etherscan.io/']
+        };
+        
+        const SCROLL_MAINNET = {
+            chainId: '0x82750',
+            chainName: 'Scroll',
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://rpc.scroll.io/'],
+            blockExplorerUrls: ['https://scrollscan.com/']
+        };
+
+        // Create floating particles
+        function createParticles() {
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.width = particle.style.height = (Math.random() * 4 + 2) + 'px';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 10000);
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function updateProgress(step, status = 'active') {
+            const stepElement = document.getElementById(`step${step}`);
+            if (stepElement) {
+                stepElement.className = `progress-step ${status}`;
+            }
+            
+            if (status === 'active') {
+                currentStep = step;
+                document.getElementById('progressBar').style.display = 'block';
+            }
+        }
+
+        function completeStep(step) {
+            updateProgress(step, 'completed');
+            if (step < 6) updateProgress(step + 1, 'active');
+        }
+
+        function failStep(step) {
+            updateProgress(step, 'failed');
+        }
+
+        // Hash generation function
+        function generateKeccakHash(content) {
+            try {
+                if (typeof keccak_256 !== 'undefined') {
+                    return '0x' + keccak_256(content);
+                } else {
+                    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(content));
+                }
+            } catch (error) {
+                return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(content));
+            }
+        }
+
+        // File upload handling
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        document.getElementById('fileUploadArea').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        // Drag and drop handling
+        const uploadArea = document.getElementById('fileUploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let jsonData;
+                    
+                    if (file.name.endsWith('.json')) {
+                        jsonData = JSON.parse(content);
+                    } else {
+                        jsonData = JSON.parse(content);
+                    }
+                    
+                    processJsonData(jsonData, content);
+                    
+                } catch (error) {
+                    updateStatus(`❌ Error parsing file: ${error.message}`, 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function processJsonData(jsonData, rawContent) {
+            currentJsonContent = rawContent;
+            
+            // Auto-fill title from JSON
+            if (jsonData.title) {
+                document.getElementById('scrollTitle').value = jsonData.title;
+            } else if (jsonData.metadata && jsonData.metadata.title) {
+                document.getElementById('scrollTitle').value = jsonData.metadata.title;
+            }
+            
+            // Generate hash
+            const hash = generateKeccakHash(rawContent);
+            document.getElementById('scrollHash').value = hash;
+            
+            // Update preview
+            document.getElementById('jsonPreview').textContent = JSON.stringify(jsonData, null, 2);
+            
+            // Enable Pinata upload
+            document.getElementById('uploadToPinata').disabled = false;
+            
+            updateStatus(`✅ File processed successfully! Hash generated: ${hash.substring(0, 10)}...`, 'success');
+        }
+
+        // Pinata upload function
+        async function uploadToPinata() {
+            const apiKey = document.getElementById('pinataApiKey').value.trim();
+            const secretKey = document.getElementById('pinataSecretKey').value.trim();
+            
+            if (!apiKey || !secretKey) {
+                updateStatus('❌ Please enter Pinata API credentials', 'error');
+                return;
+            }
+            
+            if (!currentJsonContent) {
+                updateStatus('❌ No file content to upload', 'error');
+                return;
+            }
+            
+            updateProgress(1);
+            updateProgress(2);
+            updateStatus('🔄 Uploading to Pinata IPFS...', 'info');
+            
+            try {
+                const formData = new FormData();
+                const blob = new Blob([currentJsonContent], { type: 'application/json' });
+                formData.append('file', blob, 'scroll.json');
+                
+                const metadata = JSON.stringify({
+                    name: document.getElementById('scrollTitle').value || 'Sovereign Scroll',
+                    keyvalues: {
+                        scroll_type: 'sovereign',
+                        minting_interface: 'enhanced_dual_l1_l2'
+                    }
+                });
+                formData.append('pinataMetadata', metadata);
+                
+                const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+                    method: 'POST',
+                    headers: {
+                        'pinata_api_key': apiKey,
+                        'pinata_secret_api_key': secretKey
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Pinata upload failed: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                const cid = result.IpfsHash;
+                
+                // Auto-fill CID
+                document.getElementById('scrollCid').value = cid;
+                
+                completeStep(2);
+                updateStatus(`✅ Successfully uploaded to IPFS!\nCID: ${cid}\nAuto-filled all parameters!`, 'success');
+                
+                // Enable validation
+                document.getElementById('validateParams').disabled = false;
+                
+            } catch (error) {
+                failStep(2);
+                updateStatus(`❌ Pinata upload failed: ${error.message}`, 'error');
+            }
+        }
+
+        // GitHub loading function
+        async function loadFromGithub() {
+            const repo = document.getElementById('githubRepo').value.trim();
+            const path = document.getElementById('githubPath').value.trim();
+            const token = document.getElementById('githubToken').value.trim();
+            
+            if (!repo || !path) {
+                updateStatus('❌ Please enter GitHub repository and file path', 'error');
+                return;
+            }
+            
+            updateProgress(1);
+            updateStatus('🔄 Loading from GitHub...', 'info');
+            
+            try {
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'Scroll-Minter'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `token ${token}`;
+                }
+                
+                const response = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+                    headers: headers
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const content = atob(data.content);
+                
+                try {
+                    const jsonData = JSON.parse(content);
+                    processJsonData(jsonData, content);
+                    completeStep(1);
+                    updateStatus(`✅ Successfully loaded from GitHub!\nFile: ${path}\nReady for Pinata upload!`, 'success');
+                } catch (parseError) {
+                    throw new Error(`Invalid JSON in GitHub file: ${parseError.message}`);
+                }
+                
+            } catch (error) {
+                failStep(1);
+                updateStatus(`❌ GitHub loading failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                updateProgress(3);
+                updateStatus('🔄 Connecting to MetaMask...', 'info');
+                
+                if (!window.ethereum) {
+                    throw new Error('MetaMask not found. Please install MetaMask.');
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+                
+                const network = await provider.getNetwork();
+                
+                l1Provider = new ethers.providers.JsonRpcProvider('https://ethereum.publicnode.com');
+                l2Provider = new ethers.providers.JsonRpcProvider('https://rpc.scroll.io/');
+                
+                const balance = await provider.getBalance(userAddress);
+                document.getElementById('walletAddress').textContent = userAddress;
+                document.getElementById('currentNetwork').textContent = network.name;
+                document.getElementById('ethBalance').textContent = ethers.utils.formatEther(balance) + ' ETH';
+                document.getElementById('walletInfo').style.display = 'block';
+                
+                document.getElementById('connectWallet').textContent = '✅ Wallet Connected';
+                document.getElementById('connectWallet').disabled = true;
+                document.getElementById('connectWallet').className = 'button success';
+                
+                completeStep(3);
+                updateStatus('✅ Wallet connected! All systems ready for dual minting.', 'success');
+                
+            } catch (error) {
+                failStep(3);
+                updateStatus(`❌ Wallet connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function validateParameters() {
+            try {
+                updateStatus('🔄 Validating all parameters...', 'info');
+                
+                const recipient = document.getElementById('recipientAddress').value.trim();
+                const cid = document.getElementById('scrollCid').value.trim();
+                const title = document.getElementById('scrollTitle').value.trim();
+                const hash = document.getElementById('scrollHash').value.trim();
+                
+                if (!ethers.utils.isAddress(recipient)) {
+                    throw new Error('Invalid recipient address');
+                }
+                
+                if (!cid || cid.length < 40) {
+                    throw new Error('Invalid or missing IPFS CID');
+                }
+                
+                if (title.length < 5) {
+                    throw new Error('Scroll title too short');
+                }
+                
+                if (!hash.startsWith('0x') || hash.length !== 66) {
+                    throw new Error('Invalid Keccak256 hash format');
+                }
+                
+                await estimateGasCosts();
+                
+                document.getElementById('validateParams').textContent = '✅ All Parameters Valid';
+                document.getElementById('validateParams').disabled = true;
+                document.getElementById('validateParams').className = 'button success';
+                document.getElementById('mintDual').disabled = false;
+                
+                updateStatus('✅ All parameters validated! Ready for enhanced dual minting.', 'success');
+                
+            } catch (error) {
+                updateStatus(`❌ Validation failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function estimateGasCosts() {
+            try {
+                const l1GasPrice = await l1Provider.getGasPrice();
+                const l1GasCost = l1GasPrice.mul(200000);
+                
+                const l2GasPrice = await l2Provider.getGasPrice();
+                const l2GasCost = l2GasPrice.mul(150000);
+                
+                const totalCostWei = l1GasCost.add(l2GasCost);
+                const totalCostEth = ethers.utils.formatEther(totalCostWei);
+                const totalCostUsd = (parseFloat(totalCostEth) * 2500).toFixed(0);
+                
+                document.getElementById('gasEstimate').textContent = `${totalCostEth.slice(0, 6)} ETH (~$${totalCostUsd})`;
+                document.getElementById('totalCost').textContent = `~$${totalCostUsd} (L1 + L2 + Pinata)`;
+                
+            } catch (error) {
+                document.getElementById('gasEstimate').textContent = 'Unable to estimate';
+                console.error('Gas estimation error:', error);
+            }
+        }
+
+        async function executeDualMint() {
+            try {
+                updateProgress(4);
+                updateStatus('🔄 Starting enhanced dual L1/L2 minting...', 'info');
+                
+                const recipient = document.getElementById('recipientAddress').value.trim();
+                const cid = document.getElementById('scrollCid').value.trim();
+                const title = document.getElementById('scrollTitle').value.trim();
+                const hash = document.getElementById('scrollHash').value.trim();
+                
+                document.getElementById('mintDual').disabled = true;
+                
+                updateStatus('⚡ Minting on L1 Ethereum Mainnet...', 'info');
+                
+                await switchToNetwork(ETHEREUM_MAINNET);
+                const l1Signer = provider.getSigner();
+                const l1Contract = new ethers.Contract(L1_CONTRACT, CONTRACT_ABI, l1Signer);
+                
+                const l1Tx = await l1Contract.mint(recipient, cid, title, hash, {
+                    gasLimit: 200000
+                });
+                
+                updateStatus(`⏳ L1 transaction sent: ${l1Tx.hash}\nWaiting for confirmation...`, 'info');
+                
+                const l1Receipt = await l1Tx.wait();
+                if (l1Receipt.status !== 1) {
+                    throw new Error('L1 transaction failed');
+                }
+                
+                completeStep(4);
+                updateProgress(5);
+                updateStatus(`✅ L1 minting successful!\n🔄 Now minting on L2 Scroll...`, 'info');
+                
+                await switchToNetwork(SCROLL_MAINNET);
+                const l2Signer = provider.getSigner();
+                const l2Contract = new ethers.Contract(L2_CONTRACT, CONTRACT_ABI, l2Signer);
+                
+                const l2Tx = await l2Contract.mint(recipient, cid, title, hash, {
+                    gasLimit: 150000
+                });
+                
+                updateStatus(`⏳ L2 transaction sent: ${l2Tx.hash}\nWaiting for confirmation...`, 'info');
+                
+                const l2Receipt = await l2Tx.wait();
+                if (l2Receipt.status !== 1) {
+                    throw new Error('L2 transaction failed');
+                }
+                
+                completeStep(5);
+                updateProgress(6);
+                
+                const successMessage = `🎉 ENHANCED DUAL L1/L2 MINTING COMPLETE! 🎉\n\n` +
+                    `✨ Scroll successfully processed and minted!\n` +
+                    `📜 Title: ${title}\n` +
+                    `📌 IPFS CID: ${cid}\n` +
+                    `🔗 L1 Transaction: ${l1Tx.hash}\n` +
+                    `⚡ L2 Transaction: ${l2Tx.hash}\n` +
+                    `🛡️ Wallet: ${recipient}\n` +
+                    `🔐 Hash: ${hash.substring(0, 10)}...\n\n` +
+                    `💰 Complete Economic Activation:\n` +
+                    `• Auto-uploaded to IPFS via Pinata\n` +
+                    `• Perpetual 0.618% royalty stream activated\n` +
+                    `• KBT tokens generated on L2\n` +
+                    `• Permanent L1 anchor established\n` +
+                    `• Full sovereign scroll protocol compliance\n\n` +
+                    `🌟 Your scroll is now fully sovereign and economically active!`;
+                
+                updateStatus(successMessage, 'success');
+                completeStep(6);
+                
+                document.getElementById('mintDual').textContent = '🎉 Enhanced Mint Complete!';
+                document.getElementById('mintDual').className = 'button success';
+                
+            } catch (error) {
+                const failedStep = currentStep;
+                failStep(failedStep);
+                updateStatus(`❌ Enhanced minting failed at step ${failedStep}: ${error.message}`, 'error');
+                
+                document.getElementById('mintDual').disabled = false;
+                document.getElementById('mintDual').textContent = '🔄 Retry Enhanced Mint';
+            }
+        }
+
+        async function switchToNetwork(networkConfig) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: networkConfig.chainId }],
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [networkConfig],
+                    });
+                } else {
+                    throw switchError;
+                }
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+        }
+
+        // Event listeners
+        document.getElementById('uploadToPinata').addEventListener('click', uploadToPinata);
+        document.getElementById('loadFromGithub').addEventListener('click', loadFromGithub);
+        document.getElementById('connectWallet').addEventListener('click', connectWallet);
+        document.getElementById('validateParams').addEventListener('click', validateParameters);
+        document.getElementById('mintDual').addEventListener('click', executeDualMint);
+
+        // Initialize particles and interface
+        window.addEventListener('load', () => {
+            createParticles();
+            setInterval(createParticles, 8000);
+        });
+
+        updateStatus('Ready for enhanced dual-source minting! Configure API keys and upload files to begin. 🚀');
+    </script>
+</body>
+</html>
