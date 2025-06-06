@@ -7,10 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-sha3@0.8.0/src/keccak.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 25%, #0f0f23 50%, #0a0a1a 100%);
-            color: #e6e6fa;
-            font-family: 'Orbitron', 'Courier New', monospace;
+            font-family: 'Rajdhani', sans-serif;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 35%, #0f0f23 100%);
+            color: #00ffff;
             margin: 0;
             padding: 20px;
             min-height: 100vh;
@@ -18,6 +26,7 @@
             overflow-x: hidden;
         }
 
+        /* Subtle animated grid background */
         body::before {
             content: '';
             position: fixed;
@@ -26,10 +35,10 @@
             width: 100%;
             height: 100%;
             background-image: 
-                linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
+                linear-gradient(rgba(0,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px);
             background-size: 50px 50px;
-            animation: gridMove 20s linear infinite;
+            animation: gridMove 30s linear infinite;
             pointer-events: none;
             z-index: -1;
         }
@@ -39,244 +48,224 @@
             100% { transform: translate(50px, 50px); }
         }
 
+        /* Subtle floating particles */
         .particle {
             position: absolute;
             background: #00ffff;
             border-radius: 50%;
-            opacity: 0.6;
-            animation: float 6s ease-in-out infinite;
+            opacity: 0.3;
+            animation: float 8s ease-in-out infinite;
             pointer-events: none;
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.2; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.4; }
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 20px;
-            padding: 40px;
-            border: 2px solid #00ffff;
-            box-shadow: 
-                0 0 50px rgba(0, 255, 255, 0.3),
-                inset 0 0 30px rgba(255, 0, 255, 0.1);
-            backdrop-filter: blur(10px);
-            position: relative;
-        }
-
-        .container::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
-            border-radius: 20px;
-            z-index: -1;
-            animation: borderGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes borderGlow {
-            0% { opacity: 0.5; }
-            100% { opacity: 1; }
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
         }
         
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
         }
         
         .title {
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 15px;
-            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            animation: titlePulse 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes titlePulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.02); }
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         }
         
         .glyph {
-            font-size: 1.8em;
-            color: #ffff00;
-            margin: 25px 0;
-            letter-spacing: 4px;
-            text-shadow: 0 0 20px #ffff00;
-            animation: glyphFloat 3s ease-in-out infinite;
-        }
-
-        @keyframes glyphFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+            font-size: 1.2em;
+            color: #ff00ff;
+            margin: 15px 0;
+            letter-spacing: 2px;
+            opacity: 0.8;
         }
         
         .dual-network-warning {
-            background: linear-gradient(135deg, rgba(255, 165, 0, 0.2), rgba(255, 0, 255, 0.2));
-            border: 2px solid #ffa500;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 25px 0;
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.15), rgba(255, 0, 255, 0.1));
+            border: 1px solid rgba(255, 165, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
             text-align: center;
-            box-shadow: 0 0 25px rgba(255, 165, 0, 0.3);
         }
         
         .dual-network-warning h3 {
             color: #ffa500;
-            margin: 0 0 15px 0;
-            text-shadow: 0 0 15px #ffa500;
+            margin: 0 0 10px 0;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
         }
         
         .api-section {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
-            border: 2px solid #00ffff;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 25px 0;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
         }
 
         .api-section h3 {
             color: #00ffff;
-            margin: 0 0 20px 0;
-            text-shadow: 0 0 15px #00ffff;
+            margin: 0 0 15px 0;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
         }
         
         .scroll-info {
-            background: linear-gradient(135deg, rgba(75, 0, 130, 0.3), rgba(138, 43, 226, 0.3));
-            border: 2px solid #9370db;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 25px 0;
-            box-shadow: 0 0 25px rgba(147, 112, 219, 0.3);
+            background: rgba(147, 112, 219, 0.1);
+            border: 1px solid rgba(147, 112, 219, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
         }
         
         .network-section {
-            background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 255, 255, 0.1));
-            border: 2px solid #00ff00;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
         }
         
         .network-section h4 {
             color: #00ff00;
-            margin: 0 0 15px 0;
-            text-shadow: 0 0 10px #00ff00;
+            margin: 0 0 10px 0;
+            font-family: 'Orbitron', monospace;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin: 12px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            align-items: flex-start;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
         }
         
         .label {
-            font-weight: bold;
-            color: #ffff00;
-            min-width: 180px;
-            text-shadow: 0 0 8px #ffff00;
+            font-weight: 600;
+            color: #ff00ff;
+            min-width: 140px;
+            flex-shrink: 0;
         }
         
         .value {
-            color: #e6e6fa;
+            color: #00ffff;
             word-break: break-all;
             flex: 1;
+            margin-left: 10px;
         }
         
         .input-section {
-            background: linear-gradient(135deg, rgba(50, 50, 100, 0.4), rgba(100, 50, 150, 0.4));
-            border-radius: 15px;
-            padding: 25px;
-            margin: 25px 0;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            box-shadow: 0 0 20px rgba(50, 50, 100, 0.3);
+            background: rgba(50, 50, 100, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .input-section h3 {
+            color: #00ffff;
+            margin: 0 0 15px 0;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
         }
         
         .input-row {
-            margin: 20px 0;
+            margin: 15px 0;
         }
         
         .input-row label {
             display: block;
-            color: #ffff00;
-            margin-bottom: 8px;
-            font-weight: bold;
-            text-shadow: 0 0 8px #ffff00;
+            color: #ff00ff;
+            margin-bottom: 5px;
+            font-weight: 500;
         }
         
-        .input-row input, .input-row select, .input-row textarea {
+        .input-row input, 
+        .input-row select, 
+        .input-row textarea {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             background: rgba(26, 26, 62, 0.8);
-            border: 2px solid #9370db;
-            border-radius: 8px;
-            color: #e6e6fa;
-            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 5px;
+            color: #00ffff;
+            font-family: 'Rajdhani', sans-serif;
             font-size: 14px;
             transition: all 0.3s ease;
-            box-sizing: border-box;
         }
         
-        .input-row input:focus, .input-row select:focus, .input-row textarea:focus {
+        .input-row input:focus, 
+        .input-row select:focus, 
+        .input-row textarea:focus {
             outline: none;
-            border-color: #00ffff;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            border-color: #ff00ff;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
             background: rgba(26, 26, 62, 1);
         }
 
         .file-upload-area {
-            border: 2px dashed #00ffff;
-            border-radius: 10px;
-            padding: 30px;
+            border: 2px dashed rgba(0, 255, 255, 0.4);
+            border-radius: 8px;
+            padding: 25px;
             text-align: center;
-            background: rgba(0, 255, 255, 0.05);
+            background: rgba(0, 255, 255, 0.03);
             transition: all 0.3s ease;
             cursor: pointer;
         }
 
         .file-upload-area:hover {
-            background: rgba(0, 255, 255, 0.1);
-            border-color: #ffff00;
+            background: rgba(0, 255, 255, 0.08);
+            border-color: #ff00ff;
         }
 
         .file-upload-area.dragover {
-            background: rgba(0, 255, 255, 0.2);
+            background: rgba(255, 0, 255, 0.1);
             border-color: #ff00ff;
         }
         
         .button {
-            background: linear-gradient(45deg, #4b0082, #8a2be2, #9932cc);
+            background: linear-gradient(45deg, #4b0082, #8a2be2);
             color: white;
             border: none;
-            padding: 18px 35px;
-            border-radius: 10px;
-            font-size: 1.1em;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1em;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin: 12px 8px;
-            font-family: 'Orbitron', monospace;
+            margin: 8px 4px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
             width: 100%;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+            border: 1px solid rgba(138, 43, 226, 0.5);
         }
         
         .button:hover {
-            background: linear-gradient(45deg, #6a0dad, #9932cc, #ba55d3);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(138, 43, 226, 0.6);
+            background: linear-gradient(45deg, #6a0dad, #9932cc);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
         }
         
         .button:disabled {
@@ -284,108 +273,126 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            opacity: 0.6;
         }
         
         .button.success {
-            background: linear-gradient(45deg, #228b22, #32cd32, #90ee90);
+            background: linear-gradient(45deg, #228b22, #32cd32);
+            border-color: rgba(34, 139, 34, 0.5);
         }
         
         .button.warning {
-            background: linear-gradient(45deg, #ff8c00, #ffa500, #ffb347);
+            background: linear-gradient(45deg, #ff8c00, #ffa500);
+            border-color: rgba(255, 140, 0, 0.5);
         }
 
         .button.pinata {
-            background: linear-gradient(45deg, #00ffff, #40e0d0, #00ced1);
+            background: linear-gradient(45deg, #00ced1, #40e0d0);
+            border-color: rgba(0, 206, 209, 0.5);
         }
 
         .button.github {
-            background: linear-gradient(45deg, #ff00ff, #da70d6, #ee82ee);
+            background: linear-gradient(45deg, #da70d6, #ee82ee);
+            border-color: rgba(218, 112, 214, 0.5);
         }
         
         .status {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 25px 0;
-            border-left: 4px solid #ffff00;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 3px solid #00ffff;
             white-space: pre-wrap;
-            max-height: 350px;
+            max-height: 300px;
             overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            font-family: 'Rajdhani', sans-serif;
         }
         
-        .success {
+        .status.success {
             border-left-color: #00ff00;
-            background: rgba(0, 255, 0, 0.1);
+            background: rgba(0, 255, 0, 0.05);
         }
         
-        .error {
+        .status.error {
             border-left-color: #ff4444;
-            background: rgba(255, 68, 68, 0.1);
+            background: rgba(255, 68, 68, 0.05);
         }
         
-        .warning {
+        .status.warning {
             border-left-color: #ffa500;
-            background: rgba(255, 165, 0, 0.1);
+            background: rgba(255, 165, 0, 0.05);
         }
         
         .hash {
             font-family: 'Courier New', monospace;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 12px;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+            border-radius: 4px;
             word-break: break-all;
             font-size: 12px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.2);
         }
         
         .economics {
-            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 179, 71, 0.2));
-            border: 2px solid #ffd700;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 25px 0;
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .economics h3 {
+            color: #ffd700;
+            margin: 0 0 15px 0;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
         }
         
         .highlight {
-            color: #ffff00;
-            font-weight: bold;
-            text-shadow: 0 0 10px #ffff00;
+            color: #ffd700;
+            font-weight: 600;
         }
         
         .progress-bar {
             background: rgba(0, 0, 0, 0.6);
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 15px;
             margin: 15px 0;
-            border: 1px solid rgba(0, 255, 255, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            display: none;
+        }
+
+        .progress-bar h4 {
+            color: #00ffff;
+            margin: 0 0 15px 0;
+            font-family: 'Orbitron', monospace;
         }
         
         .progress-step {
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            background: rgba(100, 100, 100, 0.3);
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background: rgba(100, 100, 100, 0.2);
             transition: all 0.3s ease;
+            border-left: 3px solid transparent;
         }
         
         .progress-step.active {
-            background: rgba(255, 215, 0, 0.3);
-            color: #ffff00;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            border-left-color: #ffd700;
         }
         
         .progress-step.completed {
-            background: rgba(0, 255, 0, 0.3);
+            background: rgba(0, 255, 0, 0.15);
             color: #00ff00;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            border-left-color: #00ff00;
         }
         
         .progress-step.failed {
-            background: rgba(255, 0, 0, 0.3);
+            background: rgba(255, 0, 0, 0.15);
             color: #ff4444;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            border-left-color: #ff4444;
         }
 
         .two-column {
@@ -398,19 +405,71 @@
             .two-column {
                 grid-template-columns: 1fr;
             }
+            
+            .title {
+                font-size: 1.8em;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .label {
+                min-width: auto;
+                margin-bottom: 5px;
+            }
+            
+            .value {
+                margin-left: 0;
+            }
         }
 
         .json-preview {
             background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #00ffff;
-            border-radius: 8px;
-            padding: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 12px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
             white-space: pre-wrap;
-            color: #e6e6fa;
+            color: #00ffff;
+        }
+
+        /* Section headers */
+        .section-header {
+            color: #00ffff;
+            margin: 0 0 15px 0;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        /* Subsection headers for dual source */
+        .subsection-header {
+            color: #ff00ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1em;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        /* Wallet info styling */
+        #walletInfo {
+            display: none;
+        }
+
+        #walletInfo .info-row .value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -419,7 +478,7 @@
         <div class="header">
             <div class="title">⧉⟁⧉ Enhanced Dual L1/L2 Minting ⧉⟁⧉</div>
             <div class="glyph">⧉⟁⧉⧗⚔⧗⟐⧙⟐⧬⚡⧬✶⧅✶⚡⧬⟁⧉</div>
-            <h3>Advanced Pinata & GitHub Integration</h3>
+            <h3 style="color: #ff00ff; margin: 0; font-family: 'Rajdhani', sans-serif; font-weight: 400;">Advanced Pinata & GitHub Integration</h3>
         </div>
 
         <div class="dual-network-warning">
@@ -429,7 +488,7 @@
         </div>
 
         <div class="api-section">
-            <h3>🔐 API Configuration</h3>
+            <h3 class="section-header">🔐 API Configuration</h3>
             <div class="two-column">
                 <div class="input-row">
                     <label for="pinataApiKey">Pinata API Key:</label>
@@ -447,21 +506,21 @@
         </div>
 
         <div class="input-section">
-            <h3>📁 Source Selection</h3>
+            <h3 class="section-header">📁 Source Selection</h3>
             
             <div class="two-column">
                 <div>
-                    <h4 style="color: #00ffff;">📋 File Upload</h4>
+                    <h4 class="subsection-header">📋 File Upload</h4>
                     <div class="file-upload-area" id="fileUploadArea">
-                        <p>🎯 Drop JSON files here or click to browse</p>
-                        <p style="font-size: 0.9em; opacity: 0.8;">Supports: .json, .txt files</p>
+                        <p style="margin: 0 0 8px 0; font-weight: 500;">🎯 Drop JSON files here or click to browse</p>
+                        <p style="margin: 0; font-size: 0.9em; opacity: 0.7;">Supports: .json, .txt files</p>
                         <input type="file" id="fileInput" style="display: none;" accept=".json,.txt" multiple>
                     </div>
                     <button class="button pinata" id="uploadToPinata" disabled>📤 Upload to Pinata & Auto-Fill</button>
                 </div>
 
                 <div>
-                    <h4 style="color: #ff00ff;">🔗 GitHub Integration</h4>
+                    <h4 class="subsection-header">🔗 GitHub Integration</h4>
                     <div class="input-row">
                         <label for="githubRepo">GitHub Repository:</label>
                         <input type="text" id="githubRepo" placeholder="owner/repo-name">
@@ -476,7 +535,7 @@
         </div>
 
         <div class="scroll-info">
-            <h3>🔗 Dual Contract Architecture</h3>
+            <h3 class="section-header">🔗 Dual Contract Architecture</h3>
             <div class="network-section">
                 <h4>🌐 L1 Contract (Ethereum Mainnet)</h4>
                 <div class="info-row">
@@ -511,7 +570,7 @@
         </div>
 
         <div class="input-section">
-            <h3>📝 Scroll Minting Parameters</h3>
+            <h3 class="section-header">📝 Scroll Minting Parameters</h3>
             
             <div class="input-row">
                 <label for="recipientAddress">Recipient Address:</label>
@@ -537,7 +596,7 @@
                 </div>
 
                 <div>
-                    <label>JSON Preview:</label>
+                    <label style="display: block; color: #ff00ff; margin-bottom: 5px; font-weight: 500;">JSON Preview:</label>
                     <div class="json-preview" id="jsonPreview">
                         Upload a file or load from GitHub to see preview...
                     </div>
@@ -569,7 +628,7 @@
             Ready for enhanced dual-source minting! Configure API keys and upload files to begin. 🚀
         </div>
 
-        <div class="progress-bar" id="progressBar" style="display: none;">
+        <div class="progress-bar" id="progressBar">
             <h4>🔄 Enhanced Minting Progress</h4>
             <div class="progress-step" id="step1">1. File Processing & Hash Generation</div>
             <div class="progress-step" id="step2">2. Pinata IPFS Upload</div>
@@ -585,8 +644,8 @@
             <button class="button" id="mintDual" disabled>⚡ Execute Enhanced Dual Mint</button>
         </div>
 
-        <div id="walletInfo" style="display: none;" class="scroll-info">
-            <h3>👛 Wallet Status</h3>
+        <div id="walletInfo" class="scroll-info">
+            <h3 class="section-header">👛 Wallet Status</h3>
             <div class="info-row">
                 <span class="label">Address:</span>
                 <span class="value" id="walletAddress"></span>
@@ -638,21 +697,23 @@
             blockExplorerUrls: ['https://scrollscan.com/']
         };
 
-        // Create floating particles
+        // Create subtle floating particles
         function createParticles() {
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 8; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 particle.style.left = Math.random() * 100 + 'vw';
                 particle.style.top = Math.random() * 100 + 'vh';
-                particle.style.width = particle.style.height = (Math.random() * 4 + 2) + 'px';
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                particle.style.width = particle.style.height = (Math.random() * 3 + 1) + 'px';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 6 + 6) + 's';
                 document.body.appendChild(particle);
                 
                 setTimeout(() => {
-                    particle.remove();
-                }, 10000);
+                    if (particle.parentNode) {
+                        particle.remove();
+                    }
+                }, 12000);
             }
         }
 
@@ -1102,7 +1163,7 @@
         // Initialize particles and interface
         window.addEventListener('load', () => {
             createParticles();
-            setInterval(createParticles, 8000);
+            setInterval(createParticles, 10000);
         });
 
         updateStatus('Ready for enhanced dual-source minting! Configure API keys and upload files to begin. 🚀');
