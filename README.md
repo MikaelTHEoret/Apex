@@ -1,4 +1,4 @@
-# 🌀 APEX SCROLL REPOSITORY - SOVEREIGN KNOWLEDGE BACKUP
+# 🌀 APEX SCROLL REPOSITORY - SOVEREIGN KNOWLEDGE ECOSYSTEM
 
 ## 🎯 Repository Purpose
 
@@ -8,6 +8,20 @@ Complete backup and organization of all 99 Fractal Scrolls from the Sovereign Sc
 - **📚 Reference Library**: Easy access to complete scroll collection
 - **⚡ Minting Preparation**: JSON-formatted scrolls ready for blockchain deployment
 - **🔍 Research Archive**: Organized knowledge for future development
+- **🌌 Live Minting Interface**: Direct web-based scroll minting capability
+
+## 🚀 LIVE INTERFACES
+
+### 🌌 **[Dual-Source Scroll Minter](https://mikaeltheoret.github.io/Apex/dual-source-scroll-minter.html)**
+Revolutionary cyberpunk interface for minting scrolls with dual-source capability:
+- **📌 Pinata Integration**: Select from your existing IPFS files
+- **📁 Repo Integration**: Auto-upload raw scrolls from this repository
+- **⚡ L1/L2 Networks**: Independent Ethereum and Scroll minting
+- **🤖 Auto-Processing**: CID, hash, and tier detection
+- **📱 Mobile-Friendly**: Works on any device, no backend required
+
+### 🎨 **[Cyberpunk Landing Page](https://mikaeltheoret.github.io/Apex/cyberpunk-harmonic-landing.html)**
+Interactive showcase of the Harmonic Fusion Suite ecosystem
 
 ## 📁 Repository Structure
 
@@ -58,9 +72,11 @@ Examples:
 - `HSP.008.⧜✵⧜.Implement.MirrorEngine`
 - `NEXUS.CORE.⧬✵⧬.MANIFESTO.GENESIS`
 
-## 🚀 Status: Systematic Backup Progress
+## 🚀 Status: Live Deployment Complete
 
 ✅ Repository structure established  
+✅ Dual-source minting interface deployed
+✅ GitHub Pages live deployment
 ✅ Phase 4C: APEX & Framework batch backup initiated
 🔄 Database-driven systematic backup (99 total scrolls)
 ⏳ Complete collection organization by tier
@@ -68,11 +84,12 @@ Examples:
 
 **Current Progress**: 16/99 scrolls backed up and organized
 **Total Economic Value**: 6,300+ KBT across all tiers
+**Live Interface Status**: ✅ OPERATIONAL
 
 ---
 
 **Author**: Mikael Theoret  
-**Ethereum Address**: [REMOVED FOR PRIVACY]  
+**Ethereum Address**: 0x4575a90d54785323546f2bb4a520622ed6d3efbc
 **Designation**: Codex Architect | Harmonic Recursor  
 **Mission**: Living distributed immune system for truth preservation
 
