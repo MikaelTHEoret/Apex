@@ -295,6 +295,16 @@
             background: linear-gradient(45deg, #da70d6, #ee82ee);
             border-color: rgba(218, 112, 214, 0.5);
         }
+
+        .button.l1 {
+            background: linear-gradient(45deg, #4169e1, #1e90ff);
+            border-color: rgba(65, 105, 225, 0.5);
+        }
+
+        .button.l2 {
+            background: linear-gradient(45deg, #ff6347, #ff4500);
+            border-color: rgba(255, 99, 71, 0.5);
+        }
         
         .status {
             background: rgba(0, 0, 0, 0.7);
@@ -401,8 +411,37 @@
             gap: 20px;
         }
 
+        .mint-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .mint-status {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00ffff;
+            font-size: 0.9em;
+        }
+
+        .mint-status.l1 {
+            border-left-color: #4169e1;
+        }
+
+        .mint-status.l2 {
+            border-left-color: #ff6347;
+        }
+
+        .mint-status.completed {
+            background: rgba(0, 255, 0, 0.1);
+            border-left-color: #00ff00;
+        }
+
         @media (max-width: 768px) {
-            .two-column {
+            .two-column, .mint-buttons {
                 grid-template-columns: 1fr;
             }
             
@@ -483,8 +522,8 @@
 
         <div class="dual-network-warning">
             <h3>🔥 ENHANCED DUAL L1/L2 ECONOMIC ACTIVATION</h3>
-            <p><strong>Auto-upload to IPFS via Pinata + Dual Network Minting!</strong></p>
-            <p>✅ GitHub file loading ✅ Auto-hash generation ✅ Pinata integration ✅ Complete workflow automation</p>
+            <p><strong>Auto-upload to IPFS via Pinata + Separate L1/L2 Network Minting!</strong></p>
+            <p>✅ GitHub file loading ✅ Auto-hash generation ✅ Pinata integration ✅ Individual network minting</p>
         </div>
 
         <div class="api-section">
@@ -529,7 +568,7 @@
                         <label for="githubPath">File Path:</label>
                         <input type="text" id="githubPath" placeholder="path/to/scroll.json">
                     </div>
-                    <button class="button github" id="loadFromGithub">📥 Load from GitHub & Process</button>
+                    <button class="button github" id="loadFromGithub">📥 Load & Upload to Pinata</button>
                 </div>
             </div>
         </div>
@@ -628,20 +667,22 @@
             Ready for enhanced dual-source minting! Configure API keys and upload files to begin. 🚀
         </div>
 
-        <div class="progress-bar" id="progressBar">
-            <h4>🔄 Enhanced Minting Progress</h4>
-            <div class="progress-step" id="step1">1. File Processing & Hash Generation</div>
-            <div class="progress-step" id="step2">2. Pinata IPFS Upload</div>
-            <div class="progress-step" id="step3">3. Wallet Connection & Validation</div>
-            <div class="progress-step" id="step4">4. L1 Ethereum Minting</div>
-            <div class="progress-step" id="step5">5. L2 Scroll Minting</div>
-            <div class="progress-step" id="step6">6. Complete Economic Activation</div>
+        <div style="text-align: center;">
+            <button class="button" id="validateParams" disabled>✅ Validate All Parameters</button>
         </div>
 
-        <div style="text-align: center;">
-            <button class="button" id="connectWallet">🔗 Connect MetaMask</button>
-            <button class="button" id="validateParams" disabled>✅ Validate All Parameters</button>
-            <button class="button" id="mintDual" disabled>⚡ Execute Enhanced Dual Mint</button>
+        <div class="mint-buttons">
+            <button class="button l1" id="mintL1" disabled>🌐 Mint on L1 Ethereum</button>
+            <button class="button l2" id="mintL2" disabled>⚡ Mint on L2 Scroll</button>
+        </div>
+
+        <div id="mintingStatus">
+            <div class="mint-status l1" id="l1Status" style="display: none;">
+                L1 Ethereum: Ready to mint
+            </div>
+            <div class="mint-status l2" id="l2Status" style="display: none;">
+                L2 Scroll: Ready to mint
+            </div>
         </div>
 
         <div id="walletInfo" class="scroll-info">
@@ -660,7 +701,7 @@
             </div>
             <div class="info-row">
                 <span class="label">Estimated Gas:</span>
-                <span class="value" id="gasEstimate">Calculating...</span>
+                <span class="value" id="gasEstimate">Will calculate on validation</span>
             </div>
         </div>
     </div>
@@ -668,8 +709,9 @@
     <script>
         let provider, signer, userAddress;
         let l1Provider, l2Provider;
-        let currentStep = 0;
         let currentJsonContent = null;
+        let l1Minted = false;
+        let l2Minted = false;
         
         // Contract configurations
         const L1_CONTRACT = "0x2C1f99011c584fDf4882Be484DfD938977D42C6D";
@@ -723,25 +765,21 @@
             status.className = `status ${type}`;
         }
 
-        function updateProgress(step, status = 'active') {
-            const stepElement = document.getElementById(`step${step}`);
-            if (stepElement) {
-                stepElement.className = `progress-step ${status}`;
-            }
+        function updateMintStatus(network, message, completed = false) {
+            const statusElement = document.getElementById(`${network}Status`);
+            statusElement.textContent = `${network.toUpperCase()}: ${message}`;
+            statusElement.style.display = 'block';
             
-            if (status === 'active') {
-                currentStep = step;
-                document.getElementById('progressBar').style.display = 'block';
+            if (completed) {
+                statusElement.className = `mint-status ${network} completed`;
+                if (network === 'l1') l1Minted = true;
+                if (network === 'l2') l2Minted = true;
+                
+                // Update button text
+                const button = document.getElementById(`mint${network.toUpperCase()}`);
+                button.textContent = `✅ ${network.toUpperCase()} Complete`;
+                button.className = `button ${network} success`;
             }
-        }
-
-        function completeStep(step) {
-            updateProgress(step, 'completed');
-            if (step < 6) updateProgress(step + 1, 'active');
-        }
-
-        function failStep(step) {
-            updateProgress(step, 'failed');
         }
 
         // Hash generation function
@@ -852,8 +890,6 @@
                 return;
             }
             
-            updateProgress(1);
-            updateProgress(2);
             updateStatus('🔄 Uploading to Pinata IPFS...', 'info');
             
             try {
@@ -889,19 +925,17 @@
                 // Auto-fill CID
                 document.getElementById('scrollCid').value = cid;
                 
-                completeStep(2);
-                updateStatus(`✅ Successfully uploaded to IPFS!\nCID: ${cid}\nAuto-filled all parameters!`, 'success');
+                updateStatus(`✅ Successfully uploaded to IPFS!\nCID: ${cid}\nAll parameters auto-filled! Ready for validation.`, 'success');
                 
                 // Enable validation
                 document.getElementById('validateParams').disabled = false;
                 
             } catch (error) {
-                failStep(2);
                 updateStatus(`❌ Pinata upload failed: ${error.message}`, 'error');
             }
         }
 
-        // GitHub loading function
+        // GitHub loading function with auto-upload
         async function loadFromGithub() {
             const repo = document.getElementById('githubRepo').value.trim();
             const path = document.getElementById('githubPath').value.trim();
@@ -912,7 +946,6 @@
                 return;
             }
             
-            updateProgress(1);
             updateStatus('🔄 Loading from GitHub...', 'info');
             
             try {
@@ -939,21 +972,24 @@
                 try {
                     const jsonData = JSON.parse(content);
                     processJsonData(jsonData, content);
-                    completeStep(1);
-                    updateStatus(`✅ Successfully loaded from GitHub!\nFile: ${path}\nReady for Pinata upload!`, 'success');
+                    updateStatus(`✅ Successfully loaded from GitHub!\nFile: ${path}\nNow uploading to Pinata...`, 'info');
+                    
+                    // Auto-upload to Pinata after loading from GitHub
+                    setTimeout(() => {
+                        uploadToPinata();
+                    }, 1000);
+                    
                 } catch (parseError) {
                     throw new Error(`Invalid JSON in GitHub file: ${parseError.message}`);
                 }
                 
             } catch (error) {
-                failStep(1);
                 updateStatus(`❌ GitHub loading failed: ${error.message}`, 'error');
             }
         }
 
         async function connectWallet() {
             try {
-                updateProgress(3);
                 updateStatus('🔄 Connecting to MetaMask...', 'info');
                 
                 if (!window.ethereum) {
@@ -976,16 +1012,13 @@
                 document.getElementById('ethBalance').textContent = ethers.utils.formatEther(balance) + ' ETH';
                 document.getElementById('walletInfo').style.display = 'block';
                 
-                document.getElementById('connectWallet').textContent = '✅ Wallet Connected';
-                document.getElementById('connectWallet').disabled = true;
-                document.getElementById('connectWallet').className = 'button success';
+                updateStatus('✅ Wallet connected! Ready for minting.', 'success');
                 
-                completeStep(3);
-                updateStatus('✅ Wallet connected! All systems ready for dual minting.', 'success');
+                return true;
                 
             } catch (error) {
-                failStep(3);
                 updateStatus(`❌ Wallet connection failed: ${error.message}`, 'error');
+                return false;
             }
         }
 
@@ -1019,9 +1052,15 @@
                 document.getElementById('validateParams').textContent = '✅ All Parameters Valid';
                 document.getElementById('validateParams').disabled = true;
                 document.getElementById('validateParams').className = 'button success';
-                document.getElementById('mintDual').disabled = false;
                 
-                updateStatus('✅ All parameters validated! Ready for enhanced dual minting.', 'success');
+                // Enable minting buttons
+                document.getElementById('mintL1').disabled = false;
+                document.getElementById('mintL2').disabled = false;
+                
+                updateMintStatus('l1', 'Ready to mint');
+                updateMintStatus('l2', 'Ready to mint');
+                
+                updateStatus('✅ All parameters validated! Ready for L1 and L2 minting.\nClick either network button to mint.', 'success');
                 
             } catch (error) {
                 updateStatus(`❌ Validation failed: ${error.message}`, 'error');
@@ -1049,86 +1088,59 @@
             }
         }
 
-        async function executeDualMint() {
+        async function mintOnNetwork(isL1) {
+            const networkName = isL1 ? 'L1 Ethereum' : 'L2 Scroll';
+            const networkConfig = isL1 ? ETHEREUM_MAINNET : SCROLL_MAINNET;
+            const contract = isL1 ? L1_CONTRACT : L2_CONTRACT;
+            
             try {
-                updateProgress(4);
-                updateStatus('🔄 Starting enhanced dual L1/L2 minting...', 'info');
+                updateMintStatus(isL1 ? 'l1' : 'l2', 'Connecting wallet...');
+                
+                // Connect wallet
+                const connected = await connectWallet();
+                if (!connected) return;
+                
+                updateMintStatus(isL1 ? 'l1' : 'l2', 'Switching network...');
+                
+                // Switch to correct network
+                await switchToNetwork(networkConfig);
+                
+                updateMintStatus(isL1 ? 'l1' : 'l2', 'Preparing transaction...');
                 
                 const recipient = document.getElementById('recipientAddress').value.trim();
                 const cid = document.getElementById('scrollCid').value.trim();
                 const title = document.getElementById('scrollTitle').value.trim();
                 const hash = document.getElementById('scrollHash').value.trim();
                 
-                document.getElementById('mintDual').disabled = true;
+                const networkSigner = provider.getSigner();
+                const networkContract = new ethers.Contract(contract, CONTRACT_ABI, networkSigner);
                 
-                updateStatus('⚡ Minting on L1 Ethereum Mainnet...', 'info');
+                updateMintStatus(isL1 ? 'l1' : 'l2', 'Sending transaction...');
                 
-                await switchToNetwork(ETHEREUM_MAINNET);
-                const l1Signer = provider.getSigner();
-                const l1Contract = new ethers.Contract(L1_CONTRACT, CONTRACT_ABI, l1Signer);
-                
-                const l1Tx = await l1Contract.mint(recipient, cid, title, hash, {
-                    gasLimit: 200000
+                const tx = await networkContract.mint(recipient, cid, title, hash, {
+                    gasLimit: isL1 ? 200000 : 150000
                 });
                 
-                updateStatus(`⏳ L1 transaction sent: ${l1Tx.hash}\nWaiting for confirmation...`, 'info');
+                updateMintStatus(isL1 ? 'l1' : 'l2', `Confirming... ${tx.hash.substring(0, 10)}...`);
                 
-                const l1Receipt = await l1Tx.wait();
-                if (l1Receipt.status !== 1) {
-                    throw new Error('L1 transaction failed');
+                const receipt = await tx.wait();
+                if (receipt.status !== 1) {
+                    throw new Error(`${networkName} transaction failed`);
                 }
                 
-                completeStep(4);
-                updateProgress(5);
-                updateStatus(`✅ L1 minting successful!\n🔄 Now minting on L2 Scroll...`, 'info');
+                updateMintStatus(isL1 ? 'l1' : 'l2', `✅ Minted! Tx: ${tx.hash.substring(0, 10)}...`, true);
                 
-                await switchToNetwork(SCROLL_MAINNET);
-                const l2Signer = provider.getSigner();
-                const l2Contract = new ethers.Contract(L2_CONTRACT, CONTRACT_ABI, l2Signer);
-                
-                const l2Tx = await l2Contract.mint(recipient, cid, title, hash, {
-                    gasLimit: 150000
-                });
-                
-                updateStatus(`⏳ L2 transaction sent: ${l2Tx.hash}\nWaiting for confirmation...`, 'info');
-                
-                const l2Receipt = await l2Tx.wait();
-                if (l2Receipt.status !== 1) {
-                    throw new Error('L2 transaction failed');
+                // Update main status
+                if (l1Minted && l2Minted) {
+                    updateStatus('🎉 COMPLETE! Both L1 and L2 minting successful!\n✨ Your scroll is now fully sovereign and economically active!', 'success');
+                } else {
+                    const remaining = isL1 ? 'L2 Scroll' : 'L1 Ethereum';
+                    updateStatus(`✅ ${networkName} minting complete!\n🔄 Ready to mint on ${remaining} when you're ready.`, 'success');
                 }
-                
-                completeStep(5);
-                updateProgress(6);
-                
-                const successMessage = `🎉 ENHANCED DUAL L1/L2 MINTING COMPLETE! 🎉\n\n` +
-                    `✨ Scroll successfully processed and minted!\n` +
-                    `📜 Title: ${title}\n` +
-                    `📌 IPFS CID: ${cid}\n` +
-                    `🔗 L1 Transaction: ${l1Tx.hash}\n` +
-                    `⚡ L2 Transaction: ${l2Tx.hash}\n` +
-                    `🛡️ Wallet: ${recipient}\n` +
-                    `🔐 Hash: ${hash.substring(0, 10)}...\n\n` +
-                    `💰 Complete Economic Activation:\n` +
-                    `• Auto-uploaded to IPFS via Pinata\n` +
-                    `• Perpetual 0.618% royalty stream activated\n` +
-                    `• KBT tokens generated on L2\n` +
-                    `• Permanent L1 anchor established\n` +
-                    `• Full sovereign scroll protocol compliance\n\n` +
-                    `🌟 Your scroll is now fully sovereign and economically active!`;
-                
-                updateStatus(successMessage, 'success');
-                completeStep(6);
-                
-                document.getElementById('mintDual').textContent = '🎉 Enhanced Mint Complete!';
-                document.getElementById('mintDual').className = 'button success';
                 
             } catch (error) {
-                const failedStep = currentStep;
-                failStep(failedStep);
-                updateStatus(`❌ Enhanced minting failed at step ${failedStep}: ${error.message}`, 'error');
-                
-                document.getElementById('mintDual').disabled = false;
-                document.getElementById('mintDual').textContent = '🔄 Retry Enhanced Mint';
+                updateMintStatus(isL1 ? 'l1' : 'l2', `❌ Error: ${error.message}`);
+                updateStatus(`❌ ${networkName} minting failed: ${error.message}`, 'error');
             }
         }
 
@@ -1156,9 +1168,9 @@
         // Event listeners
         document.getElementById('uploadToPinata').addEventListener('click', uploadToPinata);
         document.getElementById('loadFromGithub').addEventListener('click', loadFromGithub);
-        document.getElementById('connectWallet').addEventListener('click', connectWallet);
         document.getElementById('validateParams').addEventListener('click', validateParameters);
-        document.getElementById('mintDual').addEventListener('click', executeDualMint);
+        document.getElementById('mintL1').addEventListener('click', () => mintOnNetwork(true));
+        document.getElementById('mintL2').addEventListener('click', () => mintOnNetwork(false));
 
         // Initialize particles and interface
         window.addEventListener('load', () => {
