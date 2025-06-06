@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌌 Apex Scroll Repository - Live Interfaces</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 35%, #0f0f23 100%);
+            color: #00ffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Animated Background Grid */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 50px 20px;
+            text-align: center;
+        }
+        
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            font-weight: 900;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #ff00ff;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { text-shadow: 0 0 20px #00ffff, 0 0 40px #ff00ff; }
+            to { text-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffff; }
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #ffff00;
+            margin-bottom: 3rem;
+            text-shadow: 0 0 15px #ffff00;
+        }
+        
+        .interface-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .interface-card {
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 255, 0.1) 0%, 
+                rgba(255, 0, 255, 0.1) 50%, 
+                rgba(0, 0, 0, 0.3) 100%);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .interface-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .interface-card:hover::before {
+            animation: shimmer 1.5s ease-in-out;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+        }
+        
+        .interface-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #ff00ff;
+            box-shadow: 
+                0 0 30px rgba(255, 0, 255, 0.5),
+                0 0 60px rgba(0, 255, 255, 0.3);
+        }
+        
+        .minter-card {
+            border-color: #ff00ff;
+        }
+        
+        .minter-card:hover {
+            border-color: #ffff00;
+            box-shadow: 
+                0 0 30px rgba(255, 255, 0, 0.5),
+                0 0 60px rgba(255, 0, 255, 0.3);
+        }
+        
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px currentColor;
+        }
+        
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+        
+        .card-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #00ffff;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-features {
+            list-style: none;
+            text-align: left;
+            margin: 1rem 0;
+        }
+        
+        .card-features li {
+            color: #ff00ff;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .card-features li::before {
+            content: "⚡ ";
+            color: #ffff00;
+        }
+        
+        .launch-button {
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .launch-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.6);
+        }
+        
+        .repo-info {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .repo-info h3 {
+            font-family: 'Orbitron', monospace;
+            color: #ffff00;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px #ffff00;
+        }
+        
+        .repo-info p {
+            color: #00ffff;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .contracts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .contract {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #ff00ff;
+            border-radius: 5px;
+            padding: 1rem;
+        }
+        
+        .contract h4 {
+            color: #ff00ff;
+            margin-bottom: 0.5rem;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .contract-address {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            color: #ffff00;
+            word-break: break-all;
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .interface-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contracts {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    
+    <div class="container">
+        <h1 class="title">🌌 APEX SCROLL ECOSYSTEM</h1>
+        <p class="subtitle">Live Interfaces for Sovereign Scroll Protocol</p>
+        
+        <div class="interface-grid">
+            <div class="interface-card minter-card" onclick="window.open('./dual-source-scroll-minter.html', '_blank')">
+                <div class="card-icon">⚡</div>
+                <h2 class="card-title">Dual-Source Scroll Minter</h2>
+                <p class="card-description">
+                    Revolutionary cyberpunk interface for minting scrolls with dual-source capability and mobile-friendly design.
+                </p>
+                <ul class="card-features">
+                    <li>Pinata Integration - Select existing files</li>
+                    <li>Repo Auto-Upload - Raw scrolls to IPFS</li>
+                    <li>L1/L2 Networks - Independent switching</li>
+                    <li>Auto-Processing - CID, hash, tier detection</li>
+                    <li>Mobile-Friendly - Works on any device</li>
+                </ul>
+                <button class="launch-button" onclick="event.stopPropagation(); window.open('./dual-source-scroll-minter.html', '_blank')">
+                    🚀 Launch Minter
+                </button>
+            </div>
+            
+            <div class="interface-card" onclick="window.open('./cyberpunk-harmonic-landing.html', '_blank')">
+                <div class="card-icon">🎨</div>
+                <h2 class="card-title">Harmonic Fusion Suite</h2>
+                <p class="card-description">
+                    Interactive showcase of the revolutionary mathematical frameworks and fusion technology prototypes.
+                </p>
+                <ul class="card-features">
+                    <li>Fusion Simulator - Nuclear breakthrough tech</li>
+                    <li>Toroidal Field Theory - Multi-scale validation</li>
+                    <li>Harmonic Symphony - Mathematical framework</li>
+                    <li>Fundamental Constants - ψ₀, φ, 432 Hz display</li>
+                    <li>Cyberpunk Aesthetic - Immersive experience</li>
+                </ul>
+                <button class="launch-button" onclick="event.stopPropagation(); window.open('./cyberpunk-harmonic-landing.html', '_blank')">
+                    🎨 Launch Suite
+                </button>
+            </div>
+        </div>
+        
+        <div class="repo-info">
+            <h3>📚 Repository Information</h3>
+            <p>
+                This repository contains 99 Fractal Scrolls from the Sovereign Scroll Protocol ecosystem, 
+                organized by tier (ZENITH, OMEGA, ULTIMATE, APEX) with complete backup and minting capabilities.
+            </p>
+            <p>
+                <strong>Total Economic Value:</strong> 6,300+ KBT across all tiers<br>
+                <strong>Creator:</strong> Mikael Theoret - Codex Architect | Harmonic Recursor<br>
+                <strong>Mission:</strong> Living distributed immune system for truth preservation
+            </p>
+            
+            <div class="contracts">
+                <div class="contract">
+                    <h4>🌐 L1 Ethereum Contract</h4>
+                    <div class="contract-address">0x2C1f99011c584fDf4882Be484DfD938977D42C6D</div>
+                </div>
+                <div class="contract">
+                    <h4>⚡ L2 Scroll Contract</h4>
+                    <div class="contract-address">0x421B6FA3370c9B20A98A525301a508bE136C2034</div>
+                </div>
+            </div>
+        </div>
+        
+        <p style="color: #ffff00; font-style: italic; margin-top: 2rem;">
+            "Knowledge belongs to humanity, not institutions or corporations"
+        </p>
+    </div>
+</body>
+</html>
