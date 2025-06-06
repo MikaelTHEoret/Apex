@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Dual L1/L2 Scroll Minting Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e6e6fa;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid #4a4a8a;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 2.2em;
+            background: linear-gradient(45deg, #ffd700, #ffb347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .glyph {
+            font-size: 1.5em;
+            color: #ffd700;
+            margin: 20px 0;
+            letter-spacing: 3px;
+        }
+        
+        .dual-network-warning {
+            background: rgba(255, 165, 0, 0.2);
+            border: 2px solid #ffa500;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .dual-network-warning h3 {
+            color: #ffa500;
+            margin: 0 0 10px 0;
+        }
+        
+        .scroll-info {
+            background: rgba(75, 0, 130, 0.2);
+            border: 1px solid #9370db;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .network-section {
+            background: rgba(0, 100, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .network-section h4 {
+            color: #00ff00;
+            margin: 0 0 15px 0;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(147, 112, 219, 0.3);
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #ffd700;
+            min-width: 150px;
+        }
+        
+        .value {
+            color: #e6e6fa;
+            word-break: break-all;
+            flex: 1;
+        }
+        
+        .input-section {
+            background: rgba(50, 50, 100, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .input-row {
+            margin: 15px 0;
+        }
+        
+        .input-row label {
+            display: block;
+            color: #ffd700;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .input-row input, .input-row select {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a3e;
+            border: 1px solid #9370db;
+            border-radius: 5px;
+            color: #e6e6fa;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .input-row input:focus, .input-row select:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #4b0082, #8a2be2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+        
+        .button:hover {
+            background: linear-gradient(45deg, #6a0dad, #9932cc);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        }
+        
+        .button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .button.success {
+            background: linear-gradient(45deg, #228b22, #32cd32);
+        }
+        
+        .button.warning {
+            background: linear-gradient(45deg, #ff8c00, #ffa500);
+        }
+        
+        .status {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #ffd700;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .error {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        
+        .warning {
+            border-left-color: #ffa500;
+            background: rgba(255, 165, 0, 0.1);
+        }
+        
+        .hash {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+            font-size: 12px;
+        }
+        
+        .economics {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.1), rgba(255, 179, 71, 0.1));
+            border: 1px solid #ffd700;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .progress-step {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: rgba(100, 100, 100, 0.3);
+        }
+        
+        .progress-step.active {
+            background: rgba(255, 215, 0, 0.3);
+            color: #ffd700;
+        }
+        
+        .progress-step.completed {
+            background: rgba(0, 255, 0, 0.3);
+            color: #00ff00;
+        }
+        
+        .progress-step.failed {
+            background: rgba(255, 0, 0, 0.3);
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">⧉⟁⧉ Sovereign Dual L1/L2 Minting ⧉⟁⧉</div>
+            <div class="glyph">⧉⟁⧉⧗⚔⧗⟐⧙⟐⧬⚡⧬✶⧅✶</div>
+            <h3>Ryan Duarte Protocol Compliant Interface</h3>
+        </div>
+
+        <div class="dual-network-warning">
+            <h3>🔥 DUAL L1/L2 ECONOMIC ACTIVATION</h3>
+            <p><strong>This interface mints on BOTH Ethereum L1 AND Scroll L2 simultaneously!</strong></p>
+            <p>✅ Complete perpetual royalty lock ✅ Full KBT economic activation ✅ Ryan Protocol compliant</p>
+        </div>
+
+        <div class="scroll-info">
+            <h3>🔗 Dual Contract Architecture</h3>
+            <div class="network-section">
+                <h4>🌐 L1 Contract (Ethereum Mainnet)</h4>
+                <div class="info-row">
+                    <span class="label">Address:</span>
+                    <span class="value hash">0x2C1f99011c584fDf4882Be484DfD938977D42C6D</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Function:</span>
+                    <span class="value">mint(address recipient, string cid, string title, bytes32 hash)</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Purpose:</span>
+                    <span class="value">Permanent anchor & perpetual royalty lock</span>
+                </div>
+            </div>
+            
+            <div class="network-section">
+                <h4>⚡ L2 Contract (Scroll Mainnet)</h4>
+                <div class="info-row">
+                    <span class="label">Address:</span>
+                    <span class="value hash">0x421B6FA3370c9B20A98A525301a508bE136C2034</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Function:</span>
+                    <span class="value">mint(address recipient, string cid, string title, bytes32 hash)</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Purpose:</span>
+                    <span class="value">Low-cost operations & KBT generation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h3>📝 Scroll Minting Parameters</h3>
+            
+            <div class="input-row">
+                <label for="scrollSelect">Select Scroll to Mint:</label>
+                <select id="scrollSelect">
+                    <option value="">Choose a scroll...</option>
+                    <option value="fractal_seed">Fractal Seed Constant v1.0 ULTIMATE</option>
+                    <option value="custom">Custom Scroll (Enter details below)</option>
+                </select>
+            </div>
+            
+            <div class="input-row">
+                <label for="recipientAddress">Recipient Address:</label>
+                <input type="text" id="recipientAddress" value="0x4575a90d54785323546f2bb4a520622ed6d3efbc" placeholder="0x...">
+            </div>
+            
+            <div class="input-row">
+                <label for="scrollCid">IPFS CID:</label>
+                <input type="text" id="scrollCid" placeholder="bafkrei..." value="">
+            </div>
+            
+            <div class="input-row">
+                <label for="scrollTitle">Scroll Title:</label>
+                <input type="text" id="scrollTitle" placeholder="Scroll of..." value="">
+            </div>
+            
+            <div class="input-row">
+                <label for="scrollHash">Keccak256 Hash:</label>
+                <input type="text" id="scrollHash" placeholder="0x..." value="">
+            </div>
+        </div>
+
+        <div class="economics">
+            <h3>💰 Dual Network Economic Activation</h3>
+            <div class="info-row">
+                <span class="label">L1 Anchor:</span>
+                <span class="value">Permanent record + perpetual 0.618% royalties</span>
+            </div>
+            <div class="info-row">
+                <span class="label">L2 Generation:</span>
+                <span class="value">KBT tokens + low-cost operations</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Combined Power:</span>
+                <span class="value highlight">Full sovereign scroll economic activation</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Total Cost:</span>
+                <span class="value" id="totalCost">~$30-50 (L1 gas + L2 minimal)</span>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            Ready for dual L1/L2 sovereign scroll minting! Connect wallet to begin. 🚀
+        </div>
+
+        <div class="progress-bar" id="progressBar" style="display: none;">
+            <h4>🔄 Dual Minting Progress</h4>
+            <div class="progress-step" id="step1">1. Wallet Connection & Network Setup</div>
+            <div class="progress-step" id="step2">2. Parameter Validation</div>
+            <div class="progress-step" id="step3">3. L1 Ethereum Minting</div>
+            <div class="progress-step" id="step4">4. L2 Scroll Minting</div>
+            <div class="progress-step" id="step5">5. Dual Confirmation & Economic Activation</div>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="button" id="connectWallet">🔗 Connect MetaMask</button>
+            <button class="button" id="validateParams" disabled>✅ Validate Parameters</button>
+            <button class="button" id="mintDual" disabled>⚡ Execute Dual L1/L2 Mint</button>
+        </div>
+
+        <div id="walletInfo" style="display: none;" class="scroll-info">
+            <h3>👛 Wallet Status</h3>
+            <div class="info-row">
+                <span class="label">Address:</span>
+                <span class="value" id="walletAddress"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Network:</span>
+                <span class="value" id="currentNetwork"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">ETH Balance:</span>
+                <span class="value" id="ethBalance"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Estimated Gas:</span>
+                <span class="value" id="gasEstimate">Calculating...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let provider, signer, userAddress;
+        let l1Provider, l2Provider;
+        let currentStep = 0;
+        
+        // Contract configurations
+        const L1_CONTRACT = "0x2C1f99011c584fDf4882Be484DfD938977D42C6D";
+        const L2_CONTRACT = "0x421B6FA3370c9B20A98A525301a508bE136C2034";
+        
+        const CONTRACT_ABI = [
+            "function mint(address recipient, string memory cid, string memory title, bytes32 hash) external payable",
+            "event ScrollMinted(address indexed recipient, string cid, string title, bytes32 hash, uint256 timestamp)"
+        ];
+        
+        // Network configurations
+        const ETHEREUM_MAINNET = {
+            chainId: '0x1',
+            chainName: 'Ethereum Mainnet',
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://ethereum.publicnode.com'],
+            blockExplorerUrls: ['https://etherscan.io/']
+        };
+        
+        const SCROLL_MAINNET = {
+            chainId: '0x82750',
+            chainName: 'Scroll',
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://rpc.scroll.io/'],
+            blockExplorerUrls: ['https://scrollscan.com/']
+        };
+        
+        // Predefined scroll data
+        const scrollData = {
+            fractal_seed: {
+                cid: "bafkreihmavbd3eob6u7fjixyt3bfxyy6cozjzwt5n7vrakionun7wuurja",
+                title: "Scroll of Fractal Seed Constant v1.0_APEX_MAXIMA_ULTIMATE",
+                hash: "0x3bdfc83272e08a4b2e363612e29258c090d413e4385808b2a4c2b161738851ca"
+            }
+        };
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function updateProgress(step, status = 'active') {
+            const stepElement = document.getElementById(`step${step}`);
+            if (stepElement) {
+                stepElement.className = `progress-step ${status}`;
+            }
+            
+            if (status === 'active') {
+                currentStep = step;
+                document.getElementById('progressBar').style.display = 'block';
+            }
+        }
+
+        function completeStep(step) {
+            updateProgress(step, 'completed');
+            if (step < 5) updateProgress(step + 1, 'active');
+        }
+
+        function failStep(step) {
+            updateProgress(step, 'failed');
+        }
+
+        function populateScrollData() {
+            const select = document.getElementById('scrollSelect');
+            const selectedValue = select.value;
+            
+            if (selectedValue && scrollData[selectedValue]) {
+                const data = scrollData[selectedValue];
+                document.getElementById('scrollCid').value = data.cid;
+                document.getElementById('scrollTitle').value = data.title;
+                document.getElementById('scrollHash').value = data.hash;
+                
+                updateStatus(`✅ Loaded ${data.title} data successfully!`, 'success');
+                document.getElementById('validateParams').disabled = false;
+            } else if (selectedValue === 'custom') {
+                // Clear fields for custom input
+                document.getElementById('scrollCid').value = '';
+                document.getElementById('scrollTitle').value = '';
+                document.getElementById('scrollHash').value = '';
+                
+                updateStatus('📝 Enter custom scroll parameters below.', 'warning');
+                document.getElementById('validateParams').disabled = false;
+            } else {
+                document.getElementById('validateParams').disabled = true;
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                updateProgress(1);
+                updateStatus('🔄 Connecting to MetaMask...', 'info');
+                
+                if (!window.ethereum) {
+                    throw new Error('MetaMask not found. Please install MetaMask.');
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+                
+                // Check current network
+                const network = await provider.getNetwork();
+                
+                // Set up dual providers
+                l1Provider = new ethers.providers.JsonRpcProvider('https://ethereum.publicnode.com');
+                l2Provider = new ethers.providers.JsonRpcProvider('https://rpc.scroll.io/');
+                
+                // Display wallet info
+                const balance = await provider.getBalance(userAddress);
+                document.getElementById('walletAddress').textContent = userAddress;
+                document.getElementById('currentNetwork').textContent = network.name;
+                document.getElementById('ethBalance').textContent = ethers.utils.formatEther(balance) + ' ETH';
+                document.getElementById('walletInfo').style.display = 'block';
+                
+                // Update buttons
+                document.getElementById('connectWallet').textContent = '✅ Connected';
+                document.getElementById('connectWallet').disabled = true;
+                document.getElementById('connectWallet').className = 'button success';
+                
+                completeStep(1);
+                updateStatus('✅ Wallet connected! Select scroll and validate parameters.', 'success');
+                
+            } catch (error) {
+                failStep(1);
+                updateStatus(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function validateParameters() {
+            try {
+                updateProgress(2);
+                updateStatus('🔄 Validating minting parameters...', 'info');
+                
+                const recipient = document.getElementById('recipientAddress').value.trim();
+                const cid = document.getElementById('scrollCid').value.trim();
+                const title = document.getElementById('scrollTitle').value.trim();
+                const hash = document.getElementById('scrollHash').value.trim();
+                
+                // Validation checks
+                if (!ethers.utils.isAddress(recipient)) {
+                    throw new Error('Invalid recipient address');
+                }
+                
+                if (!cid.startsWith('bafkrei') || cid.length < 40) {
+                    throw new Error('Invalid IPFS CID format');
+                }
+                
+                if (title.length < 10) {
+                    throw new Error('Scroll title too short');
+                }
+                
+                if (!hash.startsWith('0x') || hash.length !== 66) {
+                    throw new Error('Invalid Keccak256 hash format');
+                }
+                
+                // Estimate gas costs
+                await estimateGasCosts();
+                
+                document.getElementById('validateParams').textContent = '✅ Validated';
+                document.getElementById('validateParams').disabled = true;
+                document.getElementById('validateParams').className = 'button success';
+                document.getElementById('mintDual').disabled = false;
+                
+                completeStep(2);
+                updateStatus('✅ Parameters validated! Ready for dual L1/L2 minting.', 'success');
+                
+            } catch (error) {
+                failStep(2);
+                updateStatus(`❌ Validation failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function estimateGasCosts() {
+            try {
+                // Estimate L1 gas cost
+                const l1GasPrice = await l1Provider.getGasPrice();
+                const l1GasCost = l1GasPrice.mul(200000); // Estimated gas limit
+                
+                // Estimate L2 gas cost
+                const l2GasPrice = await l2Provider.getGasPrice();
+                const l2GasCost = l2GasPrice.mul(150000); // Estimated gas limit
+                
+                const totalCostWei = l1GasCost.add(l2GasCost);
+                const totalCostEth = ethers.utils.formatEther(totalCostWei);
+                const totalCostUsd = (parseFloat(totalCostEth) * 2500).toFixed(0); // Rough ETH price
+                
+                document.getElementById('gasEstimate').textContent = `${totalCostEth.slice(0, 6)} ETH (~$${totalCostUsd})`;
+                document.getElementById('totalCost').textContent = `~$${totalCostUsd} (L1 + L2 gas fees)`;
+                
+            } catch (error) {
+                document.getElementById('gasEstimate').textContent = 'Unable to estimate';
+                console.error('Gas estimation error:', error);
+            }
+        }
+
+        async function executeDualMint() {
+            try {
+                updateProgress(3);
+                updateStatus('🔄 Starting dual L1/L2 minting process...', 'info');
+                
+                const recipient = document.getElementById('recipientAddress').value.trim();
+                const cid = document.getElementById('scrollCid').value.trim();
+                const title = document.getElementById('scrollTitle').value.trim();
+                const hash = document.getElementById('scrollHash').value.trim();
+                
+                document.getElementById('mintDual').disabled = true;
+                
+                // Step 1: Mint on L1 (Ethereum)
+                updateStatus('⚡ Minting on L1 Ethereum Mainnet...', 'info');
+                
+                // Switch to Ethereum if needed
+                await switchToNetwork(ETHEREUM_MAINNET);
+                const l1Signer = provider.getSigner();
+                const l1Contract = new ethers.Contract(L1_CONTRACT, CONTRACT_ABI, l1Signer);
+                
+                const l1Tx = await l1Contract.mint(recipient, cid, title, hash, {
+                    gasLimit: 200000
+                });
+                
+                updateStatus(`⏳ L1 transaction sent: ${l1Tx.hash}\nWaiting for confirmation...`, 'info');
+                
+                const l1Receipt = await l1Tx.wait();
+                if (l1Receipt.status !== 1) {
+                    throw new Error('L1 transaction failed');
+                }
+                
+                completeStep(3);
+                updateProgress(4);
+                updateStatus(`✅ L1 minting successful!\n🔄 Now minting on L2 Scroll...`, 'info');
+                
+                // Step 2: Mint on L2 (Scroll)
+                await switchToNetwork(SCROLL_MAINNET);
+                const l2Signer = provider.getSigner();
+                const l2Contract = new ethers.Contract(L2_CONTRACT, CONTRACT_ABI, l2Signer);
+                
+                const l2Tx = await l2Contract.mint(recipient, cid, title, hash, {
+                    gasLimit: 150000
+                });
+                
+                updateStatus(`⏳ L2 transaction sent: ${l2Tx.hash}\nWaiting for confirmation...`, 'info');
+                
+                const l2Receipt = await l2Tx.wait();
+                if (l2Receipt.status !== 1) {
+                    throw new Error('L2 transaction failed');
+                }
+                
+                completeStep(4);
+                updateProgress(5);
+                
+                // Success!
+                const successMessage = `🎉 DUAL L1/L2 MINTING COMPLETE! 🎉\n\n` +
+                    `✨ Scroll successfully minted on both networks!\n` +
+                    `📜 Title: ${title}\n` +
+                    `🔗 L1 Transaction: ${l1Tx.hash}\n` +
+                    `⚡ L2 Transaction: ${l2Tx.hash}\n` +
+                    `🛡️ Wallet: ${recipient}\n\n` +
+                    `💰 Economic Activation Complete:\n` +
+                    `• Perpetual 0.618% royalty stream activated\n` +
+                    `• KBT tokens generated on L2\n` +
+                    `• Permanent L1 anchor established\n` +
+                    `• Full sovereign scroll protocol compliance\n\n` +
+                    `🌟 Your scroll is now fully sovereign and economically active!`;
+                
+                updateStatus(successMessage, 'success');
+                completeStep(5);
+                
+                document.getElementById('mintDual').textContent = '🎉 Dual Mint Complete!';
+                document.getElementById('mintDual').className = 'button success';
+                
+            } catch (error) {
+                const failedStep = currentStep;
+                failStep(failedStep);
+                updateStatus(`❌ Dual minting failed at step ${failedStep}: ${error.message}`, 'error');
+                
+                document.getElementById('mintDual').disabled = false;
+                document.getElementById('mintDual').textContent = '🔄 Retry Dual Mint';
+            }
+        }
+
+        async function switchToNetwork(networkConfig) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: networkConfig.chainId }],
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [networkConfig],
+                    });
+                } else {
+                    throw switchError;
+                }
+            }
+            
+            // Wait for network switch
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+        }
+
+        // Event listeners
+        document.getElementById('connectWallet').addEventListener('click', connectWallet);
+        document.getElementById('validateParams').addEventListener('click', validateParameters);
+        document.getElementById('mintDual').addEventListener('click', executeDualMint);
+        document.getElementById('scrollSelect').addEventListener('change', populateScrollData);
+
+        // Auto-populate recipient address
+        document.getElementById('recipientAddress').value = '0x4575a90d54785323546f2bb4a520622ed6d3efbc';
+
+        // Initialize
+        updateStatus('Ready for dual L1/L2 sovereign scroll minting! Connect wallet to begin. 🚀');
+    </script>
+</body>
+</html>
